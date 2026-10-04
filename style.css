@@ -1,0 +1,278 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: light;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+               "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #f5f6f7;
+  color: #222;
+}
+
+.app {
+  width: min(1100px, 100%);
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: clamp(20px, 3vw, 30px);
+  line-height: 1.35;
+}
+
+.card {
+  background: #fff;
+  border-radius: 14px;
+  padding: clamp(22px, 4vw, 40px);
+  box-shadow: 0 2px 14px rgba(0,0,0,0.07);
+}
+
+h2 {
+  margin-top: 0;
+}
+
+h3 {
+  margin-bottom: 10px;
+}
+
+p {
+  line-height: 1.8;
+}
+
+.field {
+  display: block;
+  margin: 22px 0;
+}
+
+.field > span,
+.field > legend {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+input[type="number"] {
+  width: 160px;
+  max-width: 100%;
+  padding: 11px 12px;
+  border: 1px solid #b9bec5;
+  border-radius: 8px;
+  font-size: 18px;
+}
+
+small {
+  color: #666;
+}
+
+.radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 24px;
+  cursor: pointer;
+}
+
+.notice {
+  margin: 26px 0;
+  padding: 16px 18px;
+  background: #f7f8fa;
+  border-radius: 10px;
+}
+
+.notice p {
+  margin: 6px 0;
+}
+
+.primary {
+  appearance: none;
+  border: 0;
+  border-radius: 9px;
+  padding: 13px 26px;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  background: #222;
+  color: #fff;
+}
+
+.primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.warning {
+  color: #a40000;
+  margin-top: 14px;
+}
+
+.progress {
+  text-align: center;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.survey-card {
+  text-align: center;
+}
+
+.image-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  min-height: 220px;
+}
+
+#surveyImage {
+  display: block;
+  width: 100%;
+  max-width: 1920px;
+  height: auto;
+  cursor: zoom-in;
+}
+
+.image-help {
+  font-size: 13px;
+  color: #666;
+  margin: 9px 0 24px;
+}
+
+.question {
+  font-size: clamp(20px, 3vw, 26px);
+  margin-bottom: 22px;
+}
+
+.scale {
+  border: 0;
+  padding: 0;
+  margin: 0 auto 28px;
+  width: min(850px, 100%);
+}
+
+.scale legend {
+  width: 100%;
+  text-align: left;
+  margin-bottom: 12px;
+  color: #555;
+}
+
+.scale-option {
+  display: inline-block;
+  vertical-align: top;
+  width: 18%;
+  min-width: 120px;
+  margin: 5px 0.5%;
+  padding: 12px 8px;
+  border: 1px solid #ccd1d7;
+  border-radius: 9px;
+  cursor: pointer;
+  line-height: 1.45;
+}
+
+.scale-option input {
+  margin-right: 7px;
+}
+
+.scale-option:has(input:checked) {
+  border: 2px solid #222;
+  background: #f0f1f3;
+}
+
+.scale-option span {
+  font-weight: 700;
+}
+
+.save-status {
+  margin-top: 20px;
+  color: #666;
+  font-size: 14px;
+}
+
+@media (max-width: 720px) {
+  .app {
+    padding: 12px 10px 32px;
+  }
+
+  .card {
+    border-radius: 10px;
+    padding: 18px;
+  }
+
+  .scale-option {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    margin: 8px 0;
+    text-align: left;
+  }
+
+  .image-wrap {
+    min-height: 0;
+  }
+
+  .primary {
+    width: 100%;
+  }
+}
+
+.request-list {
+  line-height: 1.9;
+  padding-left: 1.4em;
+}
+
+.image-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.image-modal.hidden {
+  display: none;
+}
+
+#modalImage {
+  display: block;
+  max-width: 96vw;
+  max-height: 92vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  cursor: zoom-out;
+}
+
+.modal-close {
+  position: fixed;
+  top: 12px;
+  right: 18px;
+  z-index: 10000;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 42px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 10px;
+}

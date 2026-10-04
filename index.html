@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="卒業研究 主観評価アンケート">
+  <title>背景3DCGのリアリティに関するアンケート</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <h1>背景3DCGのリアリティに関するアンケート</h1>
+    </header>
+
+    <section id="introScreen" class="screen">
+      <div class="card">
+        <h2>ご協力ありがとうございます</h2>
+        <p>
+          本アンケートは、<br>卒業研究
+          <strong>「背景3DCGにおける汚れ表現が視覚的リアリティ評価に与える影響の分析」</strong><br>
+          に関する主観評価実験です。
+        </p>
+
+        <p>
+          回答は統計的に処理し、卒業研究以外の目的では使用しません。<br>
+          また、<strong>個人が特定されることはありません。</strong>
+        </p>
+
+        <p>アンケートは<strong>約5分</strong>で終了します。</p>
+
+        <p>
+          画像を見たときの<strong>第一印象</strong>に基づいて、画像全体について評価してください。<br>
+          正解・不正解はありませんので深く考えすぎず、<strong>感じたままご回答ください。</strong>
+        </p>
+
+        <h3>回答時のお願い</h3>
+        <p>
+          閲覧環境によって画像の見え方が変化するため、以下の環境での回答にご協力ください。
+        </p>
+        <ul class="request-list">
+          <li>画面の明るさはできるだけ高く設定してください</li>
+          <li>PCまたはタブレットなど、できるだけ大きな画面でご回答ください</li>
+        </ul>
+
+        <p>ご協力のほど、よろしくお願いいたします。</p>
+
+        <h3>回答者について</h3>
+
+        <label class="field">
+          <span>年齢</span>
+          <input id="age" type="number" inputmode="numeric" min="1" max="120"
+                 step="1" placeholder="例：20" autocomplete="off">
+          <small>半角数字で入力してください。</small>
+        </label>
+
+        <fieldset class="field">
+          <legend>CG制作経験</legend>
+          <label class="radio">
+            <input type="radio" name="cgExperience" value="ある">
+            <span>ある</span>
+          </label>
+          <label class="radio">
+            <input type="radio" name="cgExperience" value="ない">
+            <span>ない</span>
+          </label>
+        </fieldset>
+
+        <div class="notice">
+          <h3>回答方法</h3>
+          <p>各画像を見たときの<strong>第一印象</strong>をもとに回答してください。</p>
+          <p>正解・不正解はありません。深く考えすぎず、感じたままお答えください。</p>
+	  <p>一度次の画像へ進むと<strong>前の画像に戻ることはできません。</strong></p>
+          <p>できるだけ<strong>大きな画面</strong>で画面の<strong>明るさを高めて</strong>ご回答ください。</p>
+        </div>
+
+
+        <button id="startButton" class="primary" type="button">アンケートを開始</button>
+        <p id="configWarning" class="warning hidden"></p>
+      </div>
+    </section>
+
+    <section id="surveyScreen" class="screen hidden" aria-live="polite">
+      <div class="progress" id="progressText">1 / 10</div>
+
+      <div class="card survey-card">
+        <div class="image-wrap">
+          <img id="surveyImage" src="" alt="評価対象の背景3DCG画像">
+        </div>
+
+        <p class="image-help">
+          必要に応じて、画像をクリックすると同じページ上で大きく表示できます。
+        </p>
+
+        <h2 class="question">この画像をリアルだと感じましたか？</h2>
+
+        <fieldset class="scale" id="scale">
+          <legend>最も近いものを1つ選んでください。</legend>
+
+          <label class="scale-option">
+            <input type="radio" name="rating" value="1">
+            <span>1<br><small>非常にそう思う</small></span>
+          </label>
+
+          <label class="scale-option">
+            <input type="radio" name="rating" value="2">
+            <span>2<br><small>そう思う</small></span>
+          </label>
+
+          <label class="scale-option">
+            <input type="radio" name="rating" value="3">
+            <span>3<br><small>どちらともいえない</small></span>
+          </label>
+
+          <label class="scale-option">
+            <input type="radio" name="rating" value="4">
+            <span>4<br><small>あまりそう思わない</small></span>
+          </label>
+
+          <label class="scale-option">
+            <input type="radio" name="rating" value="5">
+            <span>5<br><small>全くそう思わない</small></span>
+          </label>
+        </fieldset>
+
+        <button id="nextButton" class="primary" type="button" disabled>次へ</button>
+      </div>
+    </section>
+
+    <section id="completeScreen" class="screen hidden">
+      <div class="card">
+        <h2>アンケートは終了です</h2>
+        <p>以上でアンケートは終了です。</p>
+        <p>ご回答いただき、ありがとうございました。</p>
+        <p id="saveStatus" class="save-status"></p>
+      </div>
+    </section>
+  </main>
+
+  <div id="imageModal" class="image-modal hidden" role="dialog" aria-modal="true" aria-label="画像を拡大表示">
+    <button id="closeImageModal" class="modal-close" type="button" aria-label="閉じる">×</button>
+    <img id="modalImage" src="" alt="拡大表示中の背景3DCG画像">
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
