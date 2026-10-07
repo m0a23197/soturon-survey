@@ -1,151 +1,103 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="卒業研究 主観評価実験アンケート">
-  <title>背景3DCGのリアリティに関するアンケート</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>背景3DCGのリアリティに関するアンケート</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="app">
-    <header class="header">
-      <h1>背景3DCGのリアリティに関するアンケート</h1>
-    </header>
+<main class="app">
+  <header class="header">
+    <h1>背景3DCGのリアリティに関するアンケート</h1>
+  </header>
 
-    <section id="introScreen" class="screen">
-      <div class="card">
-        <h2>ご協力ありがとうございます</h2>
+  <section id="introScreen" class="screen">
+    <div class="card">
+      <h2>ご協力ありがとうございます</h2>
+      <div class="overview">
+        <p>本アンケートは、卒業研究<br>
+        「背景3DCGにおける汚れ表現が視覚的リアリティ評価に与える影響の分析」<br>
+        に関する主観評価実験です。</p>
+        <p>回答は統計的に処理し、卒業研究以外の目的では使用しません。<br>
+        また、個人が特定されることはありません。</p>
+        <p>アンケートは約5分で終了します。</p>
+        <p>画像を見たときの第一印象に基づいて、画像全体について評価してください。<br>
+        正解・不正解はありませんので深く考えすぎず、感じたままご回答ください。</p>
+        <h3>回答時のお願い</h3>
+        <p>閲覧環境によって画像の見え方が変化するため、以下の環境での回答にご協力ください。</p>
+        <ul class="request-list">
+          <li>画面の明るさはできるだけ高く設定してください</li>
+          <li>PCまたはタブレットなど、できるだけ大きな画面でご回答ください</li>
+        </ul>
+        <p><strong>一度次の質問へ進むと、前の質問に戻ることはできません。</strong></p>
+      </div>
 
-        <div class="overview">
-          <p>
-            本アンケートは、卒業研究<br>
-            「背景3DCGにおける汚れ表現が視覚的リアリティ評価に与える影響の分析」<br>
-            に関する主観評価実験です。
-          </p>
+      <h3>回答者について</h3>
+      <label class="field">
+        <span>年齢</span>
+        <input id="age" type="number" inputmode="numeric" min="1" max="120" step="1" placeholder="例：20" autocomplete="off">
+        <small>半角数字で入力してください。</small>
+      </label>
 
-          <p>
-            回答は統計的に処理し、卒業研究以外の目的では使用しません。<br>
-            また、個人が特定されることはありません。
-          </p>
+      <fieldset class="field">
+        <legend>普段、3DCGを使用した作品や映像を見る頻度はどのくらいですか？</legend>
+        <label class="choice"><input type="radio" name="cgViewingFrequency" value="ほとんど見ない"><span>ほとんど見ない</span></label>
+        <label class="choice"><input type="radio" name="cgViewingFrequency" value="月に数回程度"><span>月に数回程度</span></label>
+        <label class="choice"><input type="radio" name="cgViewingFrequency" value="週に数回程度"><span>週に数回程度</span></label>
+        <label class="choice"><input type="radio" name="cgViewingFrequency" value="ほぼ毎日"><span>ほぼ毎日</span></label>
+      </fieldset>
 
-          <p>アンケートは約5分で終了します。</p>
+      <fieldset class="field">
+        <legend>CG制作の経験はありますか？</legend>
+        <label class="radio"><input type="radio" name="cgExperience" value="ある"><span>ある</span></label>
+        <label class="radio"><input type="radio" name="cgExperience" value="ない"><span>ない</span></label>
+      </fieldset>
 
-          <p>
-            画像を見たときの第一印象に基づいて、画像全体について評価してください。<br>
-            正解・不正解はありませんので深く考えすぎず、感じたままご回答ください。
-          </p>
-
-          <h3>回答時のお願い</h3>
-          <p>
-            閲覧環境によって画像の見え方が変化するため、以下の環境での回答にご協力ください。
-          </p>
-          <ul class="request-list">
-            <li>画面の明るさはできるだけ高く設定してください</li>
-            <li>PCまたはタブレットなど、できるだけ大きな画面でご回答ください</li>
-          </ul>
-
-          <p><strong>一度次の質問へ進むと、前の質問に戻ることはできません。</strong></p>
-
-          <p>ご協力のほど、よろしくお願いいたします。</p>
-        </div>
-
-        <h3>回答者について</h3>
-
-        <label class="field">
-          <span>年齢</span>
-          <input id="age" type="number" inputmode="numeric" min="1" max="120"
-                 step="1" placeholder="例：20" autocomplete="off">
-          <small>半角数字で入力してください。</small>
-        </label>
-
+      <div id="cgFollowup" class="hidden">
         <fieldset class="field">
-          <legend>CG制作の経験はありますか？</legend>
-          <label class="radio">
-            <input type="radio" name="cgExperience" value="ある">
-            <span>ある</span>
-          </label>
-          <label class="radio">
-            <input type="radio" name="cgExperience" value="ない">
-            <span>ない</span>
-          </label>
+          <legend>現在、CG制作をどのくらいの頻度で行っていますか？</legend>
+          <label class="choice"><input type="radio" name="cgFrequency" value="現在はほとんど行っていない"><span>現在はほとんど行っていない</span></label>
+          <label class="choice"><input type="radio" name="cgFrequency" value="月に1～2回程度"><span>月に1～2回程度</span></label>
+          <label class="choice"><input type="radio" name="cgFrequency" value="週に1～2回程度"><span>週に1～2回程度</span></label>
+          <label class="choice"><input type="radio" name="cgFrequency" value="週に3回以上"><span>週に3回以上</span></label>
         </fieldset>
-
-        <div id="cgFollowup" class="hidden">
-          <fieldset class="field">
-            <legend>現在、CG制作をどのくらいの頻度で行っていますか？</legend>
-            <label class="choice">
-              <input type="radio" name="cgFrequency" value="現在はほとんど行っていない">
-              <span>現在はほとんど行っていない</span>
-            </label>
-            <label class="choice">
-              <input type="radio" name="cgFrequency" value="月に1～2回程度">
-              <span>月に1～2回程度</span>
-            </label>
-            <label class="choice">
-              <input type="radio" name="cgFrequency" value="週に1～2回程度">
-              <span>週に1～2回程度</span>
-            </label>
-            <label class="choice">
-              <input type="radio" name="cgFrequency" value="週に3回以上">
-              <span>週に3回以上</span>
-            </label>
-          </fieldset>
-
-          <fieldset class="field">
-            <legend>普段、3DCGを使用した作品や映像を見る頻度はどのくらいですか？</legend>
-            <label class="choice">
-              <input type="radio" name="cgViewingFrequency" value="ほとんど見ない">
-              <span>ほとんど見ない</span>
-            </label>
-            <label class="choice">
-              <input type="radio" name="cgViewingFrequency" value="月に数回程度">
-              <span>月に数回程度</span>
-            </label>
-            <label class="choice">
-              <input type="radio" name="cgViewingFrequency" value="週に数回程度">
-              <span>週に数回程度</span>
-            </label>
-            <label class="choice">
-              <input type="radio" name="cgViewingFrequency" value="ほぼ毎日">
-              <span>ほぼ毎日</span>
-            </label>
-          </fieldset>
-        </div>
-
-        <button id="startButton" class="primary" type="button" disabled>アンケートを開始</button>
-        <p id="configWarning" class="warning hidden"></p>
       </div>
-    </section>
 
-    <section id="surveyScreen" class="screen hidden" aria-live="polite">
-      <div class="progress" id="progressText">1 / 18</div>
-
-      <div class="card survey-card">
-        <div id="categoryLabel" class="category-label"></div>
-        <div id="instruction" class="instruction"></div>
-
-        <div id="questionArea"></div>
-
-        <button id="nextButton" class="primary" type="button" disabled>次へ</button>
-      </div>
-    </section>
-
-    <section id="completeScreen" class="screen hidden">
-      <div class="card">
-        <h2>アンケートは終了です</h2>
-        <p>以上でアンケートは終了です。</p>
-        <p>ご回答いただき、ありがとうございました。</p>
-        <p id="saveStatus" class="save-status"></p>
-      </div>
-    </section>
-
-    <div id="imageModal" class="image-modal hidden" role="dialog" aria-modal="true" aria-label="画像を拡大表示">
-      <button id="closeImageModal" class="modal-close" type="button" aria-label="閉じる">×</button>
-      <img id="modalImage" src="" alt="拡大表示中の背景3DCG画像">
+      <button id="startButton" class="primary" type="button" disabled>アンケートを開始</button>
+      <p id="introStatus" class="status"></p>
     </div>
-  </main>
+  </section>
 
-  <script src="app.js"></script>
+  <section id="surveyScreen" class="screen hidden">
+    <div class="progress" id="progressText"></div>
+
+    <div id="sectionIntroCard" class="card section-intro-card hidden">
+      <h2 id="sectionIntroTitle"></h2>
+      <div id="sectionIntroText" class="section-intro-text"></div>
+      <button id="sectionIntroButton" class="primary" type="button">この設問を開始</button>
+    </div>
+
+    <div id="questionCard" class="card survey-card hidden">
+      <div id="questionArea"></div>
+      <button id="nextButton" class="primary" type="button" disabled>次へ</button>
+    </div>
+  </section>
+
+  <section id="completeScreen" class="screen hidden">
+    <div class="card">
+      <h2>アンケートは終了です</h2>
+      <p>以上でアンケートは終了です。</p>
+      <p>ご回答いただき、ありがとうございました。</p>
+      <p id="saveStatus" class="save-status"></p>
+    </div>
+  </section>
+
+  <div id="imageModal" class="image-modal hidden">
+    <button id="closeImageModal" class="modal-close" type="button" aria-label="閉じる">×</button>
+    <img id="modalImage" src="" alt="拡大表示中の背景3DCG画像">
+  </div>
+</main>
+<script src="app.js"></script>
 </body>
 </html>
