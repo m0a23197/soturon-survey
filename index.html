@@ -1,22 +1,22 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>背景3DCGのリアリティに関するアンケート</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f6f8">
+  <title>背景3DCGのリアリティ評価アンケート</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<main class="app">
-  <header class="header">
-    <h1>背景3DCGのリアリティに関するアンケート</h1>
-  </header>
+  <main class="page-shell">
+    <header class="site-header">
+      <p class="eyebrow">卒業研究アンケート</p>
+      <h1>背景3DCGのリアリティ評価</h1>
+    </header>
 
-  <section id="introScreen" class="screen">
-    <div class="card">
+    <section id="participantScreen" class="panel">
       <h2>ご協力ありがとうございます</h2>
-      <div class="overview">
-        <p>本アンケートは、卒業研究<br>
+      <p>本アンケートは、卒業研究<br>
         「背景3DCGにおける汚れ表現が視覚的リアリティ評価に与える影響の分析」<br>
         に関する主観評価実験です。</p>
         <p>回答は統計的に処理し、卒業研究以外の目的では使用しません。<br>
@@ -33,71 +33,69 @@
         <p><strong>一度次の質問へ進むと、前の質問に戻ることはできません。</strong></p>
       </div>
 
-      <h3>回答者について</h3>
-      <label class="field">
-        <span>年齢</span>
-        <input id="age" type="number" inputmode="numeric" min="1" max="120" step="1" placeholder="例：20" autocomplete="off">
-        <small>半角数字で入力してください。</small>
-      </label>
-
-      <fieldset class="field">
-        <legend>普段、3DCGを使用した作品や映像を見る頻度はどのくらいですか？</legend>
-        <label class="choice"><input type="radio" name="cgViewingFrequency" value="ほとんど見ない"><span>ほとんど見ない</span></label>
-        <label class="choice"><input type="radio" name="cgViewingFrequency" value="月に数回程度"><span>月に数回程度</span></label>
-        <label class="choice"><input type="radio" name="cgViewingFrequency" value="週に数回程度"><span>週に数回程度</span></label>
-        <label class="choice"><input type="radio" name="cgViewingFrequency" value="ほぼ毎日"><span>ほぼ毎日</span></label>
-      </fieldset>
-
-      <fieldset class="field">
-        <legend>CG制作の経験はありますか？</legend>
-        <label class="radio"><input type="radio" name="cgExperience" value="ある"><span>ある</span></label>
-        <label class="radio"><input type="radio" name="cgExperience" value="ない"><span>ない</span></label>
-      </fieldset>
-
-      <div id="cgFollowup" class="hidden">
-        <fieldset class="field">
-          <legend>現在、CG制作をどのくらいの頻度で行っていますか？</legend>
-          <label class="choice"><input type="radio" name="cgFrequency" value="現在はほとんど行っていない"><span>現在はほとんど行っていない</span></label>
-          <label class="choice"><input type="radio" name="cgFrequency" value="月に1～2回程度"><span>月に1～2回程度</span></label>
-          <label class="choice"><input type="radio" name="cgFrequency" value="週に1～2回程度"><span>週に1～2回程度</span></label>
-          <label class="choice"><input type="radio" name="cgFrequency" value="週に3回以上"><span>週に3回以上</span></label>
-        </fieldset>
+      <div class="form-field">
+        <label for="age">年齢</label>
+        <input id="age" type="number" inputmode="numeric" min="1" max="120" step="1" placeholder="例：21" required>
       </div>
 
-      <button id="startButton" class="primary" type="button" disabled>アンケートを開始</button>
-      <p id="introStatus" class="status"></p>
-    </div>
-  </section>
+      <fieldset class="form-field">
+        <legend>3DCG作品を見る頻度</legend>
+        <label class="radio-row"><input type="radio" name="cgViewingFrequency" value="ほとんど見ない"> ほとんど見ない</label>
+        <label class="radio-row"><input type="radio" name="cgViewingFrequency" value="月に数回程度"> 月に数回程度</label>
+        <label class="radio-row"><input type="radio" name="cgViewingFrequency" value="週に数回程度"> 週に数回程度</label>
+        <label class="radio-row"><input type="radio" name="cgViewingFrequency" value="ほぼ毎日"> ほぼ毎日</label>
+      </fieldset>
 
-  <section id="surveyScreen" class="screen hidden">
-    <div class="progress" id="progressText"></div>
+      <fieldset class="form-field">
+        <legend>CG制作経験</legend>
+        <label class="radio-row"><input type="radio" name="cgExperience" value="ある"> ある</label>
+        <label class="radio-row"><input type="radio" name="cgExperience" value="ない"> ない</label>
+      </fieldset>
 
-    <div id="sectionIntroCard" class="card section-intro-card hidden">
-      <h2 id="sectionIntroTitle"></h2>
-      <div id="sectionIntroText" class="section-intro-text"></div>
-      <button id="sectionIntroButton" class="primary" type="button">この設問を開始</button>
-    </div>
+      <fieldset id="cgFrequencyField" class="form-field hidden">
+        <legend>CG制作頻度</legend>
+        <label class="radio-row"><input type="radio" name="cgFrequency" value="現在はほとんど行っていない"> 現在はほとんど行っていない</label>
+        <label class="radio-row"><input type="radio" name="cgFrequency" value="月に1～2回程度"> 月に1～2回程度</label>
+        <label class="radio-row"><input type="radio" name="cgFrequency" value="週に1～2回程度"> 週に1～2回程度</label>
+        <label class="radio-row"><input type="radio" name="cgFrequency" value="週に3回以上"> 週に3回以上</label>
+      </fieldset>
 
-    <div id="questionCard" class="card survey-card hidden">
+      <p id="formError" class="error-message" role="alert"></p>
+      <button id="startButton" class="primary-button" type="button">アンケートを開始</button>
+    </section>
+
+    <section id="sectionIntroScreen" class="panel hidden" aria-live="polite">
+      <p id="sectionKicker" class="eyebrow">設問について</p>
+      <h2 id="sectionTitle"></h2>
+      <p id="sectionInstruction" class="intro-copy"></p>
+      <button id="beginSectionButton" class="primary-button" type="button">この設問を開始</button>
+    </section>
+
+    <section id="questionScreen" class="panel hidden" aria-live="polite">
+      <div class="question-topline">
+        <span>質問</span>
+        <strong id="progressText">1 / 23</strong>
+      </div>
+      <div class="progress-track" aria-hidden="true"><div id="progressBar" class="progress-bar"></div></div>
+      <h2 id="questionHeading" class="question-heading">リアルだと思う方を選んでください。</h2>
       <div id="questionArea"></div>
-      <button id="nextButton" class="primary" type="button" disabled>次へ</button>
-    </div>
-  </section>
+      <button id="nextButton" class="primary-button" type="button" disabled>次へ</button>
+    </section>
 
-  <section id="completeScreen" class="screen hidden">
-    <div class="card">
-      <h2>アンケートは終了です</h2>
-      <p>以上でアンケートは終了です。</p>
-      <p>ご回答いただき、ありがとうございました。</p>
-      <p id="saveStatus" class="save-status"></p>
-    </div>
-  </section>
+    <section id="completeScreen" class="panel hidden" aria-live="polite">
+      <h2>ご協力ありがとうございました</h2>
+      <p>アンケートは以上です。回答を送信しています。</p>
+      <p id="saveStatus" class="save-status">回答を保存しています…</p>
+    </section>
 
-  <div id="imageModal" class="image-modal hidden">
-    <button id="closeImageModal" class="modal-close" type="button" aria-label="閉じる">×</button>
-    <img id="modalImage" src="" alt="拡大表示中の背景3DCG画像">
+    <p class="footer-note">画像をクリックすると拡大表示できます。</p>
+  </main>
+
+  <div id="imageModal" class="image-modal hidden" role="dialog" aria-modal="true" aria-label="画像の拡大表示">
+    <button id="closeImageModal" class="modal-close" type="button" aria-label="拡大表示を閉じる">閉じる ✕</button>
+    <img id="modalImage" alt="拡大表示された背景3DCG画像" draggable="false">
   </div>
-</main>
-<script src="app.js"></script>
+
+  <script src="app.js" defer></script>
 </body>
 </html>

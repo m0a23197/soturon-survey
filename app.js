@@ -1,823 +1,548 @@
-// ===== 卒業研究アンケート・完全新規再構成版 =====
+'use strict';
 
-const APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbxP3hNAl0AryJFMSEteNB9NT_OweafNgFF7-5WPMzMPFJ7goHE6MHYQ6uAIZzgXtqbS/exec";
-
-const IMAGES = {
-  CRC:"CRC.png", CRLL:"CRLL.png", CRLH:"CRLH.png", CRHL:"CRHL.png", CRHH:"CRHH.png",
-  JC:"JC.png", JLL:"JLL.png", JLH:"JLH.png", JHL:"JHL.png", JHH:"JHH.png"
-};
-
-const SECTION_DEFS = {
-  clean:{
-    key:"clean", title:"汚れなしとの比較",
-    intro:"この設問では、汚れなしの画像と汚れありの画像を比較します。\n\n2枚を十分に比較し、リアルだと思う方を選んでください。",
-    question:"リアルだと思う方を選んでください。",
-    pairs:[
-      ["CRC","CRLL"],["CRC","CRLH"],["CRC","CRHL"],["CRC","CRHH"],
-      ["JC","JLL"],["JC","JLH"],["JC","JHL"],["JC","JHH"]
-    ]
-  },
-  dirt:{
-    key:"dirt", title:"汚れ量の比較",
-    intro:"この設問では、汚れの量が異なる2枚の画像を比較し、どちらがよりリアルに感じるかを評価します。\n\n2枚を十分に比較し、リアルだと思う方を選んでください。",
-    question:"リアルだと思う方を選んでください。",
-    pairs:[["CRLH","CRHH"],["CRLL","CRHL"],["JLH","JHH"],["JLL","JHL"]]
-  },
-  info:{
-    key:"info", title:"情報量の比較",
-    intro:"この設問では、汚れ表現の情報量が異なる2枚の画像を比較し、どちらがよりリアルに感じるかを評価します。\n\n2枚を十分に比較し、リアルだと思う方を選んでください。",
-    question:"リアルだと思う方を選んでください。",
-    pairs:[["CRLH","CRLL"],["CRHH","CRHL"],["JLH","JLL"],["JHH","JHL"]]
-  }
-};
-
-const RANKING_DEFS = [
-  {sceneKey:"classroom",scene:"教室",title:"5枚のランキング",
-   intro:"この設問では、5枚の画像を比較し、リアリティの感じ方を順位付けします。\n\n5枚すべてを、リアルだと思った順に1位から5位まで並べ替えてください。",
-   images:["CRC","CRLL","CRLH","CRHL","CRHH"]},
-  {sceneKey:"shrine",scene:"神社",title:"5枚のランキング",
-   intro:"この設問では、5枚の画像を比較し、リアリティの感じ方を順位付けします。\n\n5枚すべてを、リアルだと思った順に1位から5位まで並べ替えてください。",
-   images:["JC","JLL","JLH","JHL","JHH"]}
-];
-
+// Google Apps Scriptの接続先は既存のものを維持しています。
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxP3hNAl0AryJFMSEteNB9NT_OweafNgFF7-5WPMzMPFJ7goHE6MHYQ6uAIZzgXtqbS/exec';
 const TOTAL_QUESTIONS = 23;
-
-const introScreen=document.getElementById("introScreen");
-const surveyScreen=document.getElementById("surveyScreen");
-const completeScreen=document.getElementById("completeScreen");
-const ageInput=document.getElementById("age");
-const cgFollowup=document.getElementById("cgFollowup");
-const startButton=document.getElementById("startButton");
-const introStatus=document.getElementById("introStatus");
-const progressText=document.getElementById("progressText");
-const sectionIntroCard=document.getElementById("sectionIntroCard");
-const sectionIntroTitle=document.getElementById("sectionIntroTitle");
-const sectionIntroText=document.getElementById("sectionIntroText");
-const sectionIntroButton=document.getElementById("sectionIntroButton");
-const questionCard=document.getElementById("questionCard");
-const questionArea=document.getElementById("questionArea");
-const nextButton=document.getElementById("nextButton");
-const saveStatus=document.getElementById("saveStatus");
-const imageModal=document.getElementById("imageModal");
-const modalImage=document.getElementById("modalImage");
-const closeImageModal=document.getElementById("closeImageModal");
-
-let sequence=[];
-let currentIndex=0;
-let results=[];
-let initialComparisonRecords=[];
-
-const participant={
-  age:"", cgViewingFrequency:"", cgExperience:"", cgFrequency:"",
-  sessionId:createSessionId()
+const IMAGE_FILES = {
+  CRC: 'CRC.png', CRLL: 'CRLL.png', CRLH: 'CRLH.png', CRHL: 'CRHL.png', CRHH: 'CRHH.png',
+  JC: 'JC.png', JLL: 'JLL.png', JLH: 'JLH.png', JHL: 'JHL.png', JHH: 'JHH.png'
 };
 
-function createSessionId(){
-  try{
-    if(window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
-  }catch(_){}
-  return "S"+Date.now().toString(36)+Math.random().toString(36).slice(2);
-}
-
-function shuffle(arr){
-  const a=[...arr];
-  for(let i=a.length-1;i>0;i--){
-    const j=Math.floor(Math.random()*(i+1));
-    [a[i],a[j]]=[a[j],a[i]];
+const SECTION_INFO = {
+  clean: {
+    title: '汚れなしとの比較',
+    instruction: 'この設問では、汚れなしの画像と汚れありの画像を比較します。2枚を見比べて、リアルだと思う方を選んでください。判断が難しい場合は「わからない」を選んでください。'
+  },
+  dirt: {
+    title: '汚れ量の比較',
+    instruction: 'この設問では、汚れの量が異なる画像を比較します。2枚を見比べて、リアルだと思う方を選んでください。判断が難しい場合は「わからない」を選んでください。'
+  },
+  info: {
+    title: '情報量の比較',
+    instruction: 'この設問では、汚れ表現の情報量が異なる画像を比較します。2枚を見比べて、リアルだと思う方を選んでください。判断が難しい場合は「わからない」を選んでください。'
+  },
+  retest: {
+    // 「再テスト」という語を回答者向け画面には表示しない
+    title: '画像の比較',
+    instruction: 'この設問では、先ほど見た画像の組み合わせの一部を、左右を入れ替えて表示しています。2枚を見比べて、リアルだと思う方を選んでください。判断が難しい場合は「わからない」を選んでください。'
+  },
+  ranking: {
+    title: '画像の順位付け',
+    instruction: 'この設問では、5枚の画像を比較し、リアリティの感じ方を順位付けします。画像の下にあるボタンを、リアルだと思う順に押してください。最初に選んだ画像が1位、次が2位という順番になります。画像自体を押すと拡大できます。'
   }
-  return a;
+};
+
+const participantScreen = document.getElementById('participantScreen');
+const sectionIntroScreen = document.getElementById('sectionIntroScreen');
+const questionScreen = document.getElementById('questionScreen');
+const completeScreen = document.getElementById('completeScreen');
+const ageInput = document.getElementById('age');
+const cgFrequencyField = document.getElementById('cgFrequencyField');
+const formError = document.getElementById('formError');
+const startButton = document.getElementById('startButton');
+const beginSectionButton = document.getElementById('beginSectionButton');
+const progressText = document.getElementById('progressText');
+const progressBar = document.getElementById('progressBar');
+const questionHeading = document.getElementById('questionHeading');
+const questionArea = document.getElementById('questionArea');
+const nextButton = document.getElementById('nextButton');
+const sectionKicker = document.getElementById('sectionKicker');
+const sectionTitle = document.getElementById('sectionTitle');
+const sectionInstruction = document.getElementById('sectionInstruction');
+const saveStatus = document.getElementById('saveStatus');
+const imageModal = document.getElementById('imageModal');
+const modalImage = document.getElementById('modalImage');
+const closeImageModal = document.getElementById('closeImageModal');
+
+let questionSequence = [];
+let currentIndex = 0;
+let results = [];
+let rankingSelection = [];
+const imageCache = new Map();
+
+const participant = {
+  age: '',
+  cgViewingFrequency: '',
+  cgExperience: '',
+  cgFrequency: '',
+  sessionId: createSessionId()
+};
+
+function createSessionId() {
+  if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+  return 'S' + Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
-function radioValue(name){
-  const el=document.querySelector(`input[name="${name}"]:checked`);
-  return el?el.value:"";
-}
-
-function validateIntro(){
-  const age=ageInput.value.trim();
-  const ageOK=/^[0-9]+$/.test(age)&&Number(age)>=1&&Number(age)<=120;
-  const viewing=radioValue("cgViewingFrequency");
-  const exp=radioValue("cgExperience");
-  const freq=radioValue("cgFrequency");
-
-  startButton.disabled=!(
-    ageOK && viewing && exp && (exp==="ない" || freq)
-  );
-}
-
-function updateCgBranch(){
-  const has=radioValue("cgExperience")==="ある";
-  cgFollowup.classList.toggle("hidden",!has);
-  if(!has){
-    document.querySelectorAll('input[name="cgFrequency"]').forEach(el=>el.checked=false);
+function shuffle(array) {
+  const copy = [...array];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
   }
-  validateIntro();
+  return copy;
 }
 
-function imagePath(key){
-  return `./images/${encodeURIComponent(IMAGES[key])}`;
+function getRadioValue(name) {
+  const checked = document.querySelector(`input[name="${name}"]:checked`);
+  return checked ? checked.value : '';
 }
 
-/*
- * 軽量な先読み。
- * 画像をキャッシュ用のJavaScript変数に保持せず、ブラウザの通常キャッシュに任せる。
- * 表示時は表示用のimgを別に作るため、先読みの成否が表示処理を壊さない。
- */
-function preloadImage(key){
-  return new Promise((resolve)=>{
-    const img=new Image();
-    img.onload=()=>resolve(true);
-    img.onerror=()=>resolve(false);
-    img.src=imagePath(key);
+function updateCgFrequencyVisibility() {
+  const hasExperience = getRadioValue('cgExperience') === 'ある';
+  cgFrequencyField.classList.toggle('hidden', !hasExperience);
+  if (!hasExperience) {
+    document.querySelectorAll('input[name="cgFrequency"]').forEach((radio) => { radio.checked = false; });
+  }
+}
+
+function validateParticipant() {
+  const ageText = ageInput.value.trim();
+  const ageValid = /^\d+$/.test(ageText) && Number(ageText) >= 1 && Number(ageText) <= 120;
+  const hasExperience = getRadioValue('cgExperience') === 'ある';
+  const valid = ageValid && !!getRadioValue('cgViewingFrequency') && !!getRadioValue('cgExperience') &&
+    (!hasExperience || !!getRadioValue('cgFrequency'));
+  startButton.disabled = !valid;
+  formError.textContent = '';
+  return valid;
+}
+
+function imageUrl(key) {
+  const file = IMAGE_FILES[key];
+  if (!file) throw new Error(`画像キーが定義されていません: ${key}`);
+  return `images/${encodeURIComponent(file)}`;
+}
+
+function preloadImage(key) {
+  if (imageCache.has(key)) return imageCache.get(key);
+  const promise = new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error(`画像を読み込めませんでした: ${key}`));
+    image.src = imageUrl(key);
   });
+  imageCache.set(key, promise);
+  promise.catch(() => { if (imageCache.get(key) === promise) imageCache.delete(key); });
+  return promise;
 }
 
-function preloadNext(){
-  const next=sequence[currentIndex+1];
-  if(!next) return;
-  const keys=next.kind==="ranking"?next.images:[next.leftKey,next.rightKey];
-  keys.forEach((key)=>preloadImage(key));
+function protectImage(image) {
+  image.draggable = false;
+  image.addEventListener('contextmenu', (event) => event.preventDefault());
+  image.addEventListener('dragstart', (event) => event.preventDefault());
 }
 
-function displayImage(img,key,alt){
-  return new Promise((resolve)=>{
-    let attempt=0;
+function openImageModal(src) {
+  modalImage.src = src;
+  imageModal.classList.remove('hidden');
+  closeImageModal.focus();
+}
 
-    const load=()=>{
-      attempt++;
-      const src=imagePath(key);
+function closeModal() {
+  imageModal.classList.add('hidden');
+  modalImage.removeAttribute('src');
+}
 
-      img.onload=()=>{
-        img.onload=null;
-        img.onerror=null;
-        resolve(true);
-      };
-
-      img.onerror=()=>{
-        img.onload=null;
-        img.onerror=null;
-        if(attempt<3){
-          setTimeout(load,400*attempt);
-        }else{
-          resolve(false);
-        }
-      };
-
-      img.src=attempt===1?src:`${src}?retry=${attempt}`;
-    };
-
-    img.alt=alt;
-    img.draggable=false;
-    load();
+function createImage(key, className = '') {
+  const image = document.createElement('img');
+  image.className = className;
+  image.src = imageUrl(key);
+  image.alt = '評価対象の背景3DCG画像。クリックすると拡大表示します。';
+  image.loading = 'eager';
+  protectImage(image);
+  image.addEventListener('click', (event) => {
+    event.stopPropagation();
+    openImageModal(image.src);
   });
+  return image;
 }
 
-function protectImage(img){
-  img.draggable=false;
-  img.addEventListener("contextmenu",(e)=>e.preventDefault());
-  img.addEventListener("dragstart",(e)=>e.preventDefault());
-  img.addEventListener("mousedown",(e)=>{
-    if(e.button===2)e.preventDefault();
-  });
+function createComparisonPair(leftKey, rightKey) {
+  const grid = document.createElement('div');
+  grid.className = 'comparison-grid';
+  for (const [position, key] of [['左', leftKey], ['右', rightKey]]) {
+    const card = document.createElement('div');
+    card.className = 'comparison-card';
+    card.appendChild(createImage(key, 'comparison-image'));
+    const label = document.createElement('p');
+    label.className = 'position-label';
+    label.textContent = `${position}の画像`;
+    card.appendChild(label);
+    grid.appendChild(card);
+  }
+  questionArea.appendChild(grid);
 }
 
-function openModal(src){
-  modalImage.src=src;
-  imageModal.classList.remove("hidden");
-}
-
-function closeModal(){
-  imageModal.classList.add("hidden");
-  modalImage.removeAttribute("src");
-}
-
-function makeComparison(q){
-  const block=document.createElement("div");
-  block.className="question-block";
-
-  const qt=document.createElement("p");
-  qt.className="question-text";
-  qt.textContent=q.question;
-  block.appendChild(qt);
-
-  const grid=document.createElement("div");
-  grid.className="comparison-grid";
-
-  const leftCard=document.createElement("div");
-  leftCard.className="comparison-card";
-  const leftImg=document.createElement("img");
-  leftImg.className="comparison-image";
-  protectImage(leftImg);
-  leftImg.addEventListener("click",()=>{if(leftImg.src)openModal(leftImg.src)});
-  const leftLabel=document.createElement("div");
-  leftLabel.className="position-label";
-  leftLabel.textContent="左の画像";
-  leftCard.append(leftImg,leftLabel);
-
-  const rightCard=document.createElement("div");
-  rightCard.className="comparison-card";
-  const rightImg=document.createElement("img");
-  rightImg.className="comparison-image";
-  protectImage(rightImg);
-  rightImg.addEventListener("click",()=>{if(rightImg.src)openModal(rightImg.src)});
-  const rightLabel=document.createElement("div");
-  rightLabel.className="position-label";
-  rightLabel.textContent="右の画像";
-  rightCard.append(rightImg,rightLabel);
-
-  grid.append(leftCard,rightCard);
-  block.appendChild(grid);
-
-  const fieldset=document.createElement("fieldset");
-  fieldset.className="answer-fieldset";
-
-  const legend=document.createElement("legend");
-  legend.textContent="1つ選択してください。";
+function addComparisonOptions() {
+  const fieldset = document.createElement('fieldset');
+  fieldset.className = 'answer-group';
+  const legend = document.createElement('legend');
+  legend.textContent = 'リアルだと思う方を選んでください。';
   fieldset.appendChild(legend);
-
-  const options=document.createElement("div");
-  options.className="answer-options three-choice";
-
-  const data=[
-    ["left","左"],
-    ["equal","わからない"],
-    ["right","右"]
+  const choices = [
+    ['left', '左'], ['equal', 'わからない'], ['right', '右']
   ];
-
-  data.forEach(([value,label])=>{
-    const wrap=document.createElement("label");
-    wrap.className="answer-option";
-    const input=document.createElement("input");
-    input.type="radio";
-    input.name="currentAnswer";
-    input.value=value;
-    const span=document.createElement("span");
-    span.textContent=label;
-    wrap.append(input,span);
-    options.appendChild(wrap);
-    input.addEventListener("change",()=>nextButton.disabled=false);
-  });
-  fieldset.appendChild(options);
-  block.appendChild(fieldset);
-
-  return {block,leftImg,rightImg};
+  const wrap = document.createElement('div');
+  wrap.className = 'comparison-choices';
+  for (const [value, text] of choices) {
+    const label = document.createElement('label');
+    label.className = 'choice-card';
+    const input = document.createElement('input');
+    input.type = 'radio';
+    input.name = 'currentAnswer';
+    input.value = value;
+    const span = document.createElement('span');
+    span.textContent = text;
+    label.append(input, span);
+    wrap.appendChild(label);
+    input.addEventListener('change', () => { nextButton.disabled = false; });
+  }
+  fieldset.appendChild(wrap);
+  questionArea.appendChild(fieldset);
 }
 
-function makeRanking(q){
-  const block=document.createElement("div");
-  block.className="question-block";
+function addRankingOptions(q) {
+  rankingSelection = [];
+  const container = document.createElement('div');
+  container.className = 'ranking-block';
+  const grid = document.createElement('div');
+  grid.className = 'ranking-grid';
 
-  const qt=document.createElement("p");
-  qt.className="question-text";
-  qt.textContent="5枚の画像を、リアルだと思った順に1位から5位まで選択してください。";
-  block.appendChild(qt);
-
-  const list=document.createElement("div");
-  list.className="ranking-list";
-
-  const selected=[];
-
-  const update=()=>{
-    [...list.children].forEach(item=>{
-      const rank=selected.indexOf(item.dataset.key);
-      const rankEl=item.querySelector(".rank-number");
-      if(rank>=0){
-        item.classList.add("selected");
-        rankEl.textContent=`${rank+1}位`;
-      }else{
-        item.classList.remove("selected");
-        rankEl.textContent="";
-      }
+  const update = () => {
+    [...grid.children].forEach((card) => {
+      const key = card.dataset.key;
+      const index = rankingSelection.indexOf(key);
+      const rank = card.querySelector('.rank-number');
+      const button = card.querySelector('.rank-select-button');
+      const selected = index !== -1;
+      card.classList.toggle('selected', selected);
+      rank.textContent = selected ? `${index + 1}位` : '未選択';
+      button.textContent = selected ? `${index + 1}位（選択解除）` : 'この画像を選ぶ';
+      button.setAttribute('aria-pressed', String(selected));
+      button.disabled = !selected && rankingSelection.length >= q.images.length;
     });
-
-    nextButton.disabled=selected.length!==q.images.length;
+    nextButton.disabled = rankingSelection.length !== q.images.length;
   };
 
-  q.images.forEach((key)=>{
-    const item=document.createElement("div");
-    item.className="rank-item";
-    item.dataset.key=key;
-    item.setAttribute("role","button");
-    item.setAttribute("tabindex","0");
-    item.setAttribute("aria-label","ランキング候補の画像");
-
-    const img=document.createElement("img");
-    img.className="ranking-image";
-    img.src=imagePath(key);
-    img.alt="ランキング対象の背景3DCG画像";
-    protectImage(img);
-    // 画像をクリックした場合は拡大表示だけ行い、ランキング選択にはしない。
-    img.addEventListener("click",(e)=>{
-      e.stopPropagation();
-      openModal(img.src);
-    });
-    const rank=document.createElement("span");
-    rank.className="rank-number";
-
-    item.append(img,rank);
-    list.appendChild(item);
-
-    const toggle=()=>{
-      const index=selected.indexOf(key);
-      if(index>=0){
-        selected.splice(index,1);
-      }else if(selected.length<q.images.length){
-        selected.push(key);
-      }
+  q.images.forEach((key) => {
+    const card = document.createElement('article');
+    card.className = 'ranking-card';
+    card.dataset.key = key;
+    card.appendChild(createImage(key, 'ranking-image'));
+    const rank = document.createElement('span');
+    rank.className = 'rank-number';
+    rank.textContent = '未選択';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'rank-select-button';
+    button.textContent = 'この画像を選ぶ';
+    button.setAttribute('aria-pressed', 'false');
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const oldIndex = rankingSelection.indexOf(key);
+      if (oldIndex >= 0) rankingSelection.splice(oldIndex, 1);
+      else if (rankingSelection.length < q.images.length) rankingSelection.push(key);
       update();
-    };
-
-    item.addEventListener("click",toggle);
-    item.addEventListener("keydown",(e)=>{
-      if(e.key==="Enter"||e.key===" "){
-        e.preventDefault();
-        toggle();
-      }
     });
+    card.append(rank, button);
+    grid.appendChild(card);
   });
 
+  container.appendChild(grid);
+  const help = document.createElement('p');
+  help.className = 'rank-help';
+  help.textContent = '画像の下の大きなボタンを、リアルだと思う順に押してください。最初に選んだ画像が1位です。順位の取り消しは、選択済みのボタンをもう一度押してください。画像そのものを押すと拡大表示できます。';
+  container.appendChild(help);
+  questionArea.appendChild(container);
   update();
-  block.appendChild(list);
-
-  const help=document.createElement("p");
-  help.className="rank-help";
-  help.textContent="画像をリアルだと思う順にクリックしてください。1回目が1位、2回目が2位…となります。もう一度クリックすると選択が外れ、後の順位が繰り上がります。";
-  block.appendChild(help);
-
-  return block;
 }
 
-function makeComparisonQuestion(def,pair,isRetest=false,record=null){
-  let leftKey=pair[0], rightKey=pair[1];
+function sceneOf(key) {
+  return key.startsWith('CR') ? '教室' : '神社';
+}
 
-  // Initial comparison questions: randomize left/right for every section.
-  // Retest: use the explicitly reversed pair built from the original presentation.
-  if(!isRetest){
-    if(Math.random()<0.5)[leftKey,rightKey]=[rightKey,leftKey];
+function alternatingQuestions(pairs, key, section, prefix) {
+  const classroom = shuffle(pairs.filter((pair) => sceneOf(pair[0]) === '教室'));
+  const shrine = shuffle(pairs.filter((pair) => sceneOf(pair[0]) === '神社'));
+  const startClassroom = Math.random() < 0.5;
+  const alternating = [];
+  for (let i = 0; i < Math.max(classroom.length, shrine.length); i++) {
+    if (startClassroom) {
+      if (classroom[i]) alternating.push(classroom[i]);
+      if (shrine[i]) alternating.push(shrine[i]);
+    } else {
+      if (shrine[i]) alternating.push(shrine[i]);
+      if (classroom[i]) alternating.push(classroom[i]);
+    }
   }
-
-  return {
-    kind:isRetest?"retest":"comparison",
-    sectionKey:isRetest?"retest":def.key,
-    originalSectionKey:isRetest?def.key:def.key,
-    title:isRetest?"画像の比較":def.title,
-    intro:isRetest
-      ?"この設問では、これまでの比較問題の一部を、画像の左右を入れ替えてもう一度評価します。\n\n2枚を十分に比較して回答してください。"
-      :def.intro,
-    question:isRetest
-      ?"2枚の画像を比較して、どちらの方がよりリアルに感じますか？"
-      :def.question,
-    leftKey,rightKey,
-    questionId:isRetest?`${record.questionId}_retest`:
-      `${def.key}_${pair[0]}_${pair[1]}_${Math.random().toString(36).slice(2,8)}`,
-    originalQuestionId:isRetest?record.questionId:"",
-    originalLeftImage:isRetest?record.leftKey:"",
-    originalRightImage:isRetest?record.rightKey:"",
-    displayPair:[leftKey,rightKey]
-  };
-}
-
-function buildAlternating(def){
-  const cr=shuffle(def.pairs.filter(p=>p[0].startsWith("CR")));
-  const j=shuffle(def.pairs.filter(p=>p[0].startsWith("J")));
-  const startCR=Math.random()<0.5;
-  const out=[];
-
-  for(let i=0;i<cr.length;i++){
-    out.push(makeComparisonQuestion(def,startCR?cr[i]:j[i]));
-    out.push(makeComparisonQuestion(def,startCR?j[i]:cr[i]));
-  }
-  return out;
-}
-
-function buildInitialSequence(){
-  return [
-    ...buildAlternating(SECTION_DEFS.clean),
-    ...buildAlternating(SECTION_DEFS.dirt),
-    ...buildAlternating(SECTION_DEFS.info)
-  ];
-}
-
-function buildRetests(){
-  // exactly 5 different questions from the 8 initial dirt/info comparisons
-  return shuffle(initialComparisonRecords)
-    .slice(0,5)
-    .map(record=>{
-      const rev=[record.rightKey,record.leftKey];
-      return {
-        kind:"retest",
-        sectionKey:"retest",
-        title:"画像の比較",
-        intro:
-          "この設問では、2枚の画像を比較し、どちらがよりリアルに感じるかを評価します。\n\n2枚を十分に比較し、リアルだと思う方を選んでください。",
-        question:"リアルだと思う方を選んでください。",
-        leftKey:rev[0],
-        rightKey:rev[1],
-        questionId:`${record.questionId}_retest`,
-        originalQuestionId:record.questionId,
-        originalLeftImage:record.leftKey,
-        originalRightImage:record.rightKey,
-        displayPair:rev
-      };
-    });
-}
-
-function buildRankings(){
-  const r=RANKING_DEFS.map(x=>({
-    kind:"ranking",
-    sectionKey:"ranking",
-    title:x.title,
-    intro:x.intro,
-    sceneKey:x.sceneKey,
-    scene:x.scene,
-    images:[...x.images]
+  return alternating.map((pair, index) => ({
+    type: 'comparison', key, section, questionId: `${prefix}_${pair[0]}_${pair[1]}`,
+    scene: sceneOf(pair[0]), pair: [...pair], leftKey: '', rightKey: ''
   }));
-  return Math.random()<0.5?r:[r[1],r[0]];
 }
 
-function showSectionIntro(q){
-  questionCard.classList.add("hidden");
-  sectionIntroCard.classList.remove("hidden");
-  sectionIntroTitle.textContent=q.title;
-  sectionIntroText.textContent=q.intro;
-  progressText.textContent=`${currentIndex+1} / ${TOTAL_QUESTIONS}`;
-}
+function buildQuestionSequence() {
+  const cleanPairs = [
+    ['CRC', 'CRLH'], ['CRC', 'CRHH'], ['CRC', 'CRLL'], ['CRC', 'CRHL'],
+    ['JC', 'JLH'], ['JC', 'JHH'], ['JC', 'JLL'], ['JC', 'JHL']
+  ];
+  const dirtPairs = [['CRLH', 'CRHH'], ['CRLL', 'CRHL'], ['JLH', 'JHH'], ['JLL', 'JHL']];
+  const infoPairs = [['CRLH', 'CRLL'], ['CRHH', 'CRHL'], ['JLH', 'JLL'], ['JHH', 'JHL']];
 
-async function showCurrentQuestion(){
-  const q=sequence[currentIndex];
-  questionCard.classList.remove("hidden");
-  sectionIntroCard.classList.add("hidden");
-  nextButton.disabled=true;
-  questionArea.innerHTML='<div class="loading">画像を読み込んでいます…</div>';
-
-  try{
-    if(q.kind==="ranking"){
-      questionArea.innerHTML="";
-      const block=makeRanking(q);
-      questionArea.appendChild(block);
-      preloadNext();
-      return;
-    }
-
-    questionArea.innerHTML="";
-    const built=makeComparison(q,q.leftKey,q.rightKey);
-
-    questionArea.appendChild(built.block);
-
-    const okLeft=await displayImage(built.leftImg,q.leftKey,"左の画像");
-    const okRight=await displayImage(built.rightImg,q.rightKey,"右の画像");
-
-    if(!okLeft || !okRight){
-      questionArea.innerHTML="";
-      const msg=document.createElement("div");
-      msg.className="loading";
-      msg.textContent="画像の読み込みに失敗しました。下の「再読み込み」を押してください。";
-
-      const retry=document.createElement("button");
-      retry.className="primary";
-      retry.type="button";
-      retry.textContent="再読み込み";
-      retry.addEventListener("click",()=>showCurrentQuestion());
-
-      questionArea.append(msg,retry);
-      return;
-    }
-
-    // Only start preloading after the current question is successfully displayed.
-    preloadNext();
-  }catch(err){
-    console.error(err);
-    questionArea.innerHTML='<div class="loading">画像の読み込みに失敗しました。下の「再読み込み」を押してください。</div>';
-    const retry=document.createElement("button");
-    retry.className="primary";
-    retry.textContent="再読み込み";
-    retry.type="button";
-    retry.addEventListener("click",()=>showCurrentQuestion());
-    questionArea.appendChild(retry);
-  }
-}
-
-// Correct helper: this uses q's existing display pair.
-// kept as separate function to make the retest path explicit.
-function makeComparison(q,leftKey,rightKey){
-  const wrapper=makeComparisonInternal(q,leftKey,rightKey);
-  return wrapper;
-}
-
-function makeComparisonInternal(q,leftKey,rightKey){
-  const oldQ=q;
-  // Reuse the same DOM builder while preserving the actual q keys.
-  return makeComparisonDOM(oldQ,leftKey,rightKey);
-}
-
-function makeComparisonDOM(q,leftKey,rightKey){
-  const block=document.createElement("div");
-  block.className="question-block";
-
-  const qt=document.createElement("p");
-  qt.className="question-text";
-  qt.textContent=q.question;
-  block.appendChild(qt);
-
-  const grid=document.createElement("div");
-  grid.className="comparison-grid";
-
-  function cardFor(key, label){
-    const card=document.createElement("div");
-    card.className="comparison-card";
-    const img=document.createElement("img");
-    img.className="comparison-image";
-    protectImage(img);
-    img.addEventListener("click",()=>{if(img.src)openModal(img.src)});
-    const pos=document.createElement("div");
-    pos.className="position-label";
-    pos.textContent=label;
-    card.append(img,pos);
-    return {card,img};
-  }
-
-  const L=cardFor(leftKey,"左の画像");
-  const R=cardFor(rightKey,"右の画像");
-  grid.append(L.card,R.card);
-  block.appendChild(grid);
-
-  const fieldset=document.createElement("fieldset");
-  fieldset.className="answer-group";
-  const legend=document.createElement("legend");
-  legend.textContent="リアルだと思う方を選んでください。";
-  fieldset.appendChild(legend);
-
-  const options=document.createElement("div");
-  options.className="answer-options three-choice";
-  const vals=[
-    ["left","左"],
-    ["equal","わからない"],
-    ["right","右"]
+  const sequence = [
+    ...alternatingQuestions(cleanPairs, 'clean', 'clean', 'clean'),
+    ...alternatingQuestions(dirtPairs, 'dirt', 'dirt', 'dirt'),
+    ...alternatingQuestions(infoPairs, 'info', 'info', 'info')
   ];
 
-  vals.forEach(([value,label])=>{
-    const opt=document.createElement("label");
-    opt.className="answer-option";
-    const input=document.createElement("input");
-    input.type="radio";
-    input.name="currentAnswer";
-    input.value=value;
-    const span=document.createElement("span");
-    span.textContent=label;
-    opt.append(input,span);
-    options.appendChild(opt);
-    input.addEventListener("change",()=>{nextButton.disabled=false});
-  });
+  // 16問目の完了時に、実際に提示した左右を反転した5問へ置き換えます。
+  for (let i = 0; i < 5; i++) {
+    sequence.push({ type: 'placeholder', key: 'retest', section: 'retest', questionId: `retest_pending_${i + 1}` });
+  }
 
-  fieldset.appendChild(options);
-  block.appendChild(fieldset);
-  return {block,leftImg:L.img,rightImg:R.img};
+  const rankingQuestions = [
+    { type: 'ranking', key: 'ranking', section: 'ranking', questionId: 'ranking_classroom', scene: '教室', images: ['CRC', 'CRLL', 'CRLH', 'CRHL', 'CRHH'] },
+    { type: 'ranking', key: 'ranking', section: 'ranking', questionId: 'ranking_shrine', scene: '神社', images: ['JC', 'JLL', 'JLH', 'JHL', 'JHH'] }
+  ];
+  sequence.push(...(Math.random() < 0.5 ? rankingQuestions : [rankingQuestions[1], rankingQuestions[0]]));
+  return sequence;
 }
 
-async function showCurrentQuestionFixed(){
-  const q=sequence[currentIndex];
-  questionCard.classList.remove("hidden");
-  sectionIntroCard.classList.add("hidden");
-  nextButton.disabled=true;
-  questionArea.innerHTML='<div class="loading">画像を読み込んでいます…</div>';
+function createRetestQuestions() {
+  const candidates = questionSequence.slice(8, 16).filter((q) => (q.key === 'dirt' || q.key === 'info') && q.leftKey && q.rightKey);
+  const selected = shuffle(candidates).slice(0, 5);
+  return selected.map((source, index) => ({
+    type: 'comparison', key: 'retest', section: 'retest',
+    questionId: `retest_${index + 1}_${source.questionId}`,
+    scene: source.scene,
+    leftKey: source.rightKey,
+    rightKey: source.leftKey,
+    pair: [source.rightKey, source.leftKey],
+    retestOf: source.questionId,
+    originalLeftImage: source.leftKey,
+    originalRightImage: source.rightKey
+  }));
+}
 
-  try{
-    if(q.kind==="ranking"){
-      questionArea.innerHTML="";
-      questionArea.appendChild(makeRanking(q));
-      preloadNext();
-      return;
+function showSectionIntro(section) {
+  const info = SECTION_INFO[section];
+  sectionKicker.textContent = '設問について';
+  sectionTitle.textContent = info.title;
+  sectionInstruction.textContent = info.instruction;
+  participantScreen.classList.add('hidden');
+  questionScreen.classList.add('hidden');
+  completeScreen.classList.add('hidden');
+  sectionIntroScreen.classList.remove('hidden');
+}
+
+function startSurvey() {
+  if (!validateParticipant()) {
+    formError.textContent = '未入力の項目があります。各項目を選択してください。';
+    return;
+  }
+  participant.age = ageInput.value.trim();
+  participant.cgViewingFrequency = getRadioValue('cgViewingFrequency');
+  participant.cgExperience = getRadioValue('cgExperience');
+  participant.cgFrequency = participant.cgExperience === 'ある' ? getRadioValue('cgFrequency') : '';
+
+  questionSequence = buildQuestionSequence();
+  currentIndex = 0;
+  results = [];
+  rankingSelection = [];
+  imageCache.clear();
+  showSectionIntro(questionSequence[currentIndex].section);
+}
+
+async function renderCurrentQuestion() {
+  const q = questionSequence[currentIndex];
+  if (!q || q.type === 'placeholder') {
+    questionArea.innerHTML = '<p class="error-message">設問の準備に失敗しました。ページを再読み込みしてください。</p>';
+    return;
+  }
+
+  // 進捗は「質問の描画のたび」に更新し、セクション単位で飛ばないようにします。
+  progressText.textContent = `${currentIndex + 1} / ${TOTAL_QUESTIONS}`;
+  progressBar.style.width = `${((currentIndex + 1) / TOTAL_QUESTIONS) * 100}%`;
+  questionHeading.textContent = q.type === 'ranking' ? '5枚の画像を、リアルだと思う順に順位付けしてください。' : 'リアルだと思う方を選んでください。';
+  questionArea.innerHTML = '<p class="loading-message">画像を読み込んでいます…</p>';
+  nextButton.disabled = true;
+  sectionIntroScreen.classList.add('hidden');
+  participantScreen.classList.add('hidden');
+  completeScreen.classList.add('hidden');
+  questionScreen.classList.remove('hidden');
+
+  const needed = q.type === 'ranking' ? q.images : [q.leftKey || q.pair?.[0], q.rightKey || q.pair?.[1]];
+  try {
+    await Promise.all(needed.map(preloadImage));
+    questionArea.innerHTML = '';
+    if (q.type === 'ranking') {
+      addRankingOptions(q);
+    } else {
+      let leftKey;
+      let rightKey;
+      if (q.key === 'retest') {
+        // リテスト相当の設問は、元の質問で提示した画像の左右を必ず反転。
+        leftKey = q.leftKey;
+        rightKey = q.rightKey;
+      } else {
+        [leftKey, rightKey] = q.pair;
+        // 全ての2画像比較で左右を回答者ごとにランダム化。
+        if (Math.random() < 0.5) [leftKey, rightKey] = [rightKey, leftKey];
+        q.leftKey = leftKey;
+        q.rightKey = rightKey;
+      }
+      createComparisonPair(leftKey, rightKey);
+      addComparisonOptions();
     }
 
-    questionArea.innerHTML="";
-    const built=makeComparisonDOM(q,q.leftKey,q.rightKey);
-    questionArea.appendChild(built.block);
-
-    const [leftOK,rightOK]=await Promise.all([
-      displayImage(built.leftImg,q.leftKey,"左の画像"),
-      displayImage(built.rightImg,q.rightKey,"右の画像")
-    ]);
-
-    if(!leftOK||!rightOK){
-      questionArea.innerHTML="";
-      const retry=document.createElement("button");
-      retry.className="primary";
-      retry.type="button";
-      retry.textContent="再読み込み";
-      const msg=document.createElement("div");
-      msg.className="loading";
-      msg.textContent="画像の読み込みに失敗しました。";
-      retry.addEventListener("click",showCurrentQuestionFixed);
-      questionArea.append(msg,retry);
-      return;
+    // 次の質問の画像はバックグラウンドで先読み。失敗しても表示を止めません。
+    const nextQ = questionSequence[currentIndex + 1];
+    if (nextQ && nextQ.type !== 'placeholder') {
+      const nextNeeded = nextQ.type === 'ranking' ? nextQ.images : [nextQ.leftKey || nextQ.pair?.[0], nextQ.rightKey || nextQ.pair?.[1]];
+      nextNeeded.forEach((key) => preloadImage(key).catch(() => {}));
     }
-
-    preloadNext();
-  }catch(err){
-    console.error(err);
-    questionArea.innerHTML="";
-    const msg=document.createElement("div");
-    msg.className="loading";
-    msg.textContent="画像の読み込みに失敗しました。";
-    const retry=document.createElement("button");
-    retry.className="primary";
-    retry.type="button";
-    retry.textContent="再読み込み";
-    retry.addEventListener("click",showCurrentQuestionFixed);
-    questionArea.append(msg,retry);
+  } catch (error) {
+    console.error(error);
+    questionArea.innerHTML = '<p class="error-message">画像を読み込めませんでした。通信状態を確認してからページを再読み込みしてください。</p>';
   }
 }
 
-function collectAnswer(){
-  const checked=document.querySelector('input[name="currentAnswer"]:checked');
-  return checked?checked.value:"";
+function collectCurrentAnswer() {
+  if (questionSequence[currentIndex]?.type === 'ranking') return rankingSelection.length === 5 ? [...rankingSelection] : null;
+  const checked = document.querySelector('input[name="currentAnswer"]:checked');
+  return checked ? checked.value : null;
 }
 
-function collectRanking(){
-  const list=questionArea.querySelector(".ranking-list");
-  if(!list)return [];
-  return [...list.children]
-    .filter(item=>item.classList.contains("selected"))
-    .sort((a,b)=>{
-      const ar=parseInt(a.querySelector(".rank-number")?.textContent||"",10);
-      const br=parseInt(b.querySelector(".rank-number")?.textContent||"",10);
-      return ar-br;
-    })
-    .map(item=>item.dataset.key);
-}
-
-function resultRecord(q,answer){
-  if(q.kind==="ranking"){
-    const ranks=collectRanking();
-    return {
-      globalOrder:currentIndex+1,
-      questionId:`${q.sceneKey}_ranking`,
-      questionType:"ranking",
-      scene:q.scene,
-      leftKey:"",rightKey:"",
-      displayImages:q.images.join(" / "),
-      answer:"ranking",
-      selectedImage:ranks[0]||"",
-      ranking:ranks.join(" > "),
-      rank1:ranks[0]||"",rank2:ranks[1]||"",rank3:ranks[2]||"",
-      rank4:ranks[3]||"",rank5:ranks[4]||"",
-      scaleLabel:"",
-      retestOf:"",originalLeftImage:"",originalRightImage:""
-    };
+function recordCurrentAnswer(answer) {
+  const q = questionSequence[currentIndex];
+  if (q.type === 'ranking') {
+    const ordered = answer;
+    results.push({
+      globalOrder: currentIndex + 1,
+      questionId: q.questionId,
+      questionType: 'ranking',
+      scene: q.scene,
+      leftKey: '',
+      rightKey: '',
+      displayImages: q.images.join(' / '),
+      answer: 'ranking',
+      selectedImage: ordered[0] || '',
+      ranking: ordered,
+      rank1: ordered[0] || '',
+      rank2: ordered[1] || '',
+      rank3: ordered[2] || '',
+      rank4: ordered[3] || '',
+      rank5: ordered[4] || ''
+    });
+    return;
   }
 
-  const selected=answer==="left"?q.leftKey:answer==="right"?q.rightKey:"";
-
-  return {
-    globalOrder:currentIndex+1,
-    questionId:q.questionId,
-    questionType:q.kind==="retest"?"retest":q.sectionKey,
-    scene:q.leftKey.startsWith("CR")?"教室":"神社",
-    leftKey:q.leftKey,
-    rightKey:q.rightKey,
-    displayImages:`${q.leftKey} / ${q.rightKey}`,
+  results.push({
+    globalOrder: currentIndex + 1,
+    questionId: q.questionId,
+    questionType: q.key,
+    scene: q.scene || sceneOf(q.leftKey),
+    leftKey: q.leftKey,
+    rightKey: q.rightKey,
+    displayImages: `${q.leftKey} / ${q.rightKey}`,
     answer,
-    selectedImage:selected,
-    ranking:"",
-    rank1:"",rank2:"",rank3:"",rank4:"",rank5:"",
-    scaleLabel:({left:"左",equal:"わからない",right:"右"})[answer]||"",
-    retestOf:q.kind==="retest"?q.originalQuestionId:"",
-    originalLeftImage:q.kind==="retest"?q.originalLeftImage:"",
-    originalRightImage:q.kind==="retest"?q.originalRightImage:""
-  };
+    selectedImage: answer === 'left' ? q.leftKey : (answer === 'right' ? q.rightKey : ''),
+    ranking: '',
+    rank1: '', rank2: '', rank3: '', rank4: '', rank5: '',
+    retestOf: q.retestOf || '',
+    originalLeftImage: q.originalLeftImage || '',
+    originalRightImage: q.originalRightImage || ''
+  });
 }
 
-startButton.addEventListener("click",()=>{
-  participant.age=ageInput.value.trim();
-  participant.cgViewingFrequency=radioValue("cgViewingFrequency");
-  participant.cgExperience=radioValue("cgExperience");
-  participant.cgFrequency=participant.cgExperience==="ある"?radioValue("cgFrequency"):"";
+async function submitPayloadByHiddenForm(payload) {
+  return new Promise((resolve, reject) => {
+    const frameName = `surveySubmit_${Date.now()}`;
+    const frame = document.createElement('iframe');
+    frame.name = frameName;
+    frame.title = '回答送信用フレーム';
+    frame.style.display = 'none';
+    frame.onload = () => { /* クロスオリジンの応答本文は読まず、送信処理のみ行う */ };
+    document.body.appendChild(frame);
 
-  sequence=buildInitialSequence();
-  currentIndex=0;
-  results=[];
-  initialComparisonRecords=[];
-
-  introScreen.classList.add("hidden");
-  surveyScreen.classList.remove("hidden");
-  showSectionIntro(sequence[0]);
-});
-
-ageInput.addEventListener("input",validateIntro);
-document.querySelectorAll('input[name="cgViewingFrequency"]').forEach(el=>el.addEventListener("change",validateIntro));
-document.querySelectorAll('input[name="cgExperience"]').forEach(el=>el.addEventListener("change",updateCgBranch));
-document.querySelectorAll('input[name="cgFrequency"]').forEach(el=>el.addEventListener("change",validateIntro));
-
-sectionIntroButton.addEventListener("click",()=>showCurrentQuestionFixed());
-
-nextButton.addEventListener("click",async()=>{
-  const q=sequence[currentIndex];
-
-  if(q.kind==="ranking"){
-    const ranks=collectRanking();
-    if(ranks.length!==5)return;
-    results.push(resultRecord(q,"ranking"));
-  }else{
-    const answer=collectAnswer();
-    if(!answer)return;
-
-    const rec=resultRecord(q,answer);
-    results.push(rec);
-
-    if(
-      q.kind==="comparison" &&
-      (q.sectionKey==="dirt"||q.sectionKey==="info")
-    ){
-      initialComparisonRecords.push(rec);
-    }
-  }
-
-  // Continue through the current sequence.
-  if(currentIndex<sequence.length-1){
-    const prev=sequence[currentIndex];
-    currentIndex++;
-
-    if(prev.sectionKey!==sequence[currentIndex].sectionKey){
-      showSectionIntro(sequence[currentIndex]);
-    }else{
-      await showCurrentQuestionFixed();
-    }
-    return;
-  }
-
-  // Initial 16 are completed; add retest five and rankings two.
-  if(sequence.length===16){
-    if(initialComparisonRecords.length!==8){
-      console.error("再テスト候補数:",initialComparisonRecords.length);
-    }
-
-    const retests=buildRetests();
-    const rankings=buildRankings();
-    sequence.push(...retests,...rankings);
-
-    currentIndex++;
-    showSectionIntro(sequence[currentIndex]);
-    return;
-  }
-
-  surveyScreen.classList.add("hidden");
-  completeScreen.classList.remove("hidden");
-  await saveResults();
-});
-
-async function saveResults(){
-  const payload={
-    participant,
-    results,
-    completedAt:new Date().toISOString()
-  };
-
-  saveStatus.textContent="回答を保存しています…";
-
-  try{
-    const frameName=`saveFrame_${Date.now()}`;
-    const iframe=document.createElement("iframe");
-    iframe.name=frameName;
-    iframe.style.display="none";
-    document.body.appendChild(iframe);
-
-    const form=document.createElement("form");
-    form.method="POST";
-    form.action=APPS_SCRIPT_URL;
-    form.target=frameName;
-    form.style.display="none";
-
-    const input=document.createElement("input");
-    input.type="hidden";
-    input.name="payload";
-    input.value=JSON.stringify(payload);
-
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = APPS_SCRIPT_URL;
+    form.target = frameName;
+    form.style.display = 'none';
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'payload';
+    input.value = JSON.stringify(payload);
     form.appendChild(input);
     document.body.appendChild(form);
-    form.submit();
+    try {
+      form.submit();
+    } catch (error) {
+      form.remove(); frame.remove(); reject(error); return;
+    }
+    window.setTimeout(() => { form.remove(); frame.remove(); resolve(); }, 2200);
+  });
+}
 
-    await new Promise(resolve=>setTimeout(resolve,1800));
-    form.remove();
-    iframe.remove();
-
-    saveStatus.textContent="回答を受け付けました。ご協力ありがとうございました。";
-  }catch(err){
-    console.error(err);
-    saveStatus.textContent="回答の保存を確認できませんでした。通信状態を確認してください。";
+async function finishSurvey() {
+  questionScreen.classList.add('hidden');
+  sectionIntroScreen.classList.add('hidden');
+  participantScreen.classList.add('hidden');
+  completeScreen.classList.remove('hidden');
+  saveStatus.textContent = '回答を保存しています…';
+  const payload = { participant, results, completedAt: new Date().toISOString() };
+  try {
+    await submitPayloadByHiddenForm(payload);
+    saveStatus.textContent = '回答を受け付けました。ご協力ありがとうございました。';
+  } catch (error) {
+    console.error(error);
+    try { localStorage.setItem(`survey-${participant.sessionId}`, JSON.stringify(payload)); } catch (_) {}
+    saveStatus.textContent = '回答の送信を確認できませんでした。通信状態を確認してください。';
   }
 }
 
-closeImageModal.addEventListener("click",closeModal);
-modalImage.addEventListener("click",closeModal);
-imageModal.addEventListener("click",e=>{if(e.target===imageModal)closeModal()});
-modalImage.addEventListener("contextmenu",e=>e.preventDefault());
-modalImage.addEventListener("dragstart",e=>e.preventDefault());
+async function goToNextQuestion() {
+  const answer = collectCurrentAnswer();
+  if (answer === null || answer === '') return;
+  const currentQ = questionSequence[currentIndex];
+  recordCurrentAnswer(answer);
 
-document.addEventListener("contextmenu",e=>{
-  if(e.target&&e.target.tagName==="IMG")e.preventDefault();
-});
+  // 最初の16問が終わった時点で、表示済みの左右を反転した5問を抽出します。
+  if (currentIndex === 15) {
+    const retests = createRetestQuestions();
+    questionSequence.splice(16, 5, ...retests);
+  }
 
-document.addEventListener("keydown",e=>{
-  if(e.key==="Escape"&&!imageModal.classList.contains("hidden"))closeModal();
+  if (currentIndex >= TOTAL_QUESTIONS - 1) {
+    await finishSurvey();
+    return;
+  }
+
+  const previousSection = currentQ.section;
+  currentIndex += 1;
+  const nextQ = questionSequence[currentIndex];
+  if (nextQ.section !== previousSection) {
+    showSectionIntro(nextQ.section);
+    return;
+  }
+  await renderCurrentQuestion();
+}
+
+ageInput.addEventListener('input', validateParticipant);
+document.querySelectorAll('input[name="cgViewingFrequency"], input[name="cgExperience"], input[name="cgFrequency"]').forEach((radio) => {
+  radio.addEventListener('change', () => {
+    updateCgFrequencyVisibility();
+    validateParticipant();
+  });
 });
+startButton.addEventListener('click', startSurvey);
+beginSectionButton.addEventListener('click', renderCurrentQuestion);
+nextButton.addEventListener('click', goToNextQuestion);
+closeImageModal.addEventListener('click', closeModal);
+imageModal.addEventListener('click', (event) => { if (event.target === imageModal) closeModal(); });
+modalImage.addEventListener('click', closeModal);
+modalImage.addEventListener('contextmenu', (event) => event.preventDefault());
+modalImage.addEventListener('dragstart', (event) => event.preventDefault());
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !imageModal.classList.contains('hidden')) closeModal(); });
+updateCgFrequencyVisibility();
+validateParticipant();
